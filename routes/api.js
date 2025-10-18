@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Database = require('../database/database');
-const GoogleSheetsService = require('../services/googleSheetsService');
+const GoogleAppsScriptService = require('../services/googleAppsScriptService');
 
 const db = new Database();
-const sheetsService = new GoogleSheetsService();
+const appsScriptService = new GoogleAppsScriptService();
 
 // Авторизация пользователя
 router.post('/auth', async (req, res) => {
@@ -118,7 +118,7 @@ router.post('/settings', async (req, res) => {
     }
 });
 
-// Тест подключения к Google Sheets
+// Тест подключения к Google Apps Script
 router.post('/test-connection', async (req, res) => {
     try {
         const { url } = req.body;
@@ -127,13 +127,14 @@ router.post('/test-connection', async (req, res) => {
             return res.status(400).json({ error: 'URL обязателен' });
         }
         
-        const result = await sheetsService.testConnection(url);
+        const result = await appsScriptService.testConnection(url);
         
         if (result.success) {
             res.json({
                 success: true,
                 rows: result.rows,
-                sheets: result.sheets
+                sheetName: result.sheetName,
+                message: result.message
             });
         } else {
             res.json({
@@ -147,7 +148,7 @@ router.post('/test-connection', async (req, res) => {
     }
 });
 
-// Поиск в Google Sheets
+// Поиск через Google Apps Script
 router.post('/search', async (req, res) => {
     try {
         const { query, page = 1 } = req.body;
@@ -162,7 +163,7 @@ router.post('/search', async (req, res) => {
             return res.json({ error: 'connection' });
         }
         
-        const results = await sheetsService.search(settings.sheets_url, query, {
+        const results = await appsScriptService.search(settings.sheets_url, query, {
             searchColumn: settings.search_column,
             resultColumns: settings.result_columns,
             page: parseInt(page),
@@ -200,7 +201,7 @@ router.get('/suggestions', async (req, res) => {
             return res.json({ suggestions: [] });
         }
         
-        const suggestions = await sheetsService.getSuggestions(settings.sheets_url, q, {
+        const suggestions = await appsScriptService.getSuggestions(settings.sheets_url, q, {
             searchColumn: settings.search_column
         });
         

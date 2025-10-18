@@ -33,9 +33,6 @@ git push -u origin main
 В настройках проекта Vercel добавьте:
 
 ```env
-# Google Sheets API
-GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key_here
-
 # Vercel KV (автоматически добавляется при создании KV)
 KV_REST_API_URL=your_kv_url
 KV_REST_API_TOKEN=your_kv_token
@@ -45,13 +42,15 @@ KV_REST_API_READ_ONLY_TOKEN=your_kv_readonly_token
 NODE_ENV=production
 ```
 
-## 🔧 Настройка Google Sheets API
+## 🔧 Настройка Google Apps Script
 
-1. Перейдите в [Google Cloud Console](https://console.cloud.google.com/)
-2. Создайте новый проект или выберите существующий
-3. Включите Google Sheets API
-4. Создайте API ключ в разделе "Учетные данные"
-5. Добавьте ключ в переменные окружения Vercel
+1. Перейдите на [script.google.com](https://script.google.com)
+2. Создайте новый проект и скопируйте код из `google-apps-script/Code.gs`
+3. Свяжите проект с вашей Google Sheets таблицей
+4. Разверните как веб-приложение с доступом "Все"
+5. Скопируйте URL веб-приложения
+
+Подробная инструкция в [GOOGLE_APPS_SCRIPT_SETUP.md](GOOGLE_APPS_SCRIPT_SETUP.md)
 
 ## 👤 Создание первого администратора
 

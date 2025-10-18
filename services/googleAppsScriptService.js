@@ -1,0 +1,189 @@
+const https = require('https');
+
+class GoogleAppsScriptService {
+    constructor() {
+        this.baseUrl = 'https://script.google.com/macros/s';
+    }
+
+    // Извлечь ID скрипта из URL Google Apps Script
+    extractScriptId(url) {
+        const match = url.match(/\/macros\/s\/([a-zA-Z0-9-_]+)/);
+        return match ? match[1] : null;
+    }
+
+    // Выполнить запрос к Google Apps Script
+    async makeRequest(scriptId, functionName, parameters = {}) {
+        return new Promise((resolve, reject) => {
+            const url = `${this.baseUrl}/${scriptId}/exec`;
+            const postData = JSON.stringify({
+                function: functionName,
+                parameters: parameters
+            });
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(postData)
+                }
+            };
+
+            const req = https.request(url, options, (res) => {
+                let data = '';
+                
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+                
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        resolve(result);
+                    } catch (error) {
+                        resolve({
+                            success: false,
+                            error: 'Ошибка парсинга ответа: ' + error.message
+                        });
+                    }
+                });
+            });
+
+            req.on('error', (error) => {
+                reject({
+                    success: false,
+                    error: 'Ошибка сети: ' + error.message
+                });
+            });
+
+            req.write(postData);
+            req.end();
+        });
+    }
+
+    // Тест подключения к Google Apps Script
+    async testConnection(scriptUrl) {
+        try {
+            const scriptId = this.extractScriptId(scriptUrl);
+            if (!scriptId) {
+                return {
+                    success: false,
+                    error: 'Неверный формат URL Google Apps Script'
+                };
+            }
+
+            const result = await this.makeRequest(scriptId, 'testConnection');
+            
+            if (result.success) {
+                return {
+                    success: true,
+                    rows: result.rows,
+                    sheetName: result.sheetName,
+                    message: result.message
+                };
+            } else {
+                return {
+                    success: false,
+                    error: result.error || 'Ошибка подключения'
+                };
+            }
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Ошибка подключения: ' + error.message
+            };
+        }
+    }
+
+    // Поиск в таблице через Google Apps Script
+    async search(scriptUrl, query, options = {}) {
+        try {
+            const scriptId = this.extractScriptId(scriptUrl);
+            if (!scriptId) {
+                return { error: 'connection' };
+            }
+
+            const {
+                searchColumn = 'A',
+                resultColumns = 'B,C,D',
+                page = 1,
+                limit = 10
+            } = options;
+
+            const result = await this.makeRequest(scriptId, 'searchInSheet', {
+                query: query,
+                searchColumn: searchColumn,
+                resultColumns: resultColumns
+            });
+
+            if (!result.success) {
+                return { error: 'connection' };
+            }
+
+            // Пагинация
+            const totalResults = result.data.length;
+            const totalPages = Math.ceil(totalResults / limit);
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            const paginatedResults = result.data.slice(startIndex, endIndex);
+
+            return {
+                data: paginatedResults,
+                page,
+                totalPages,
+                totalResults
+            };
+        } catch (error) {
+            console.error('Ошибка поиска:', error);
+            return { error: 'connection' };
+        }
+    }
+
+    // Получить подсказки для автодополнения
+    async getSuggestions(scriptUrl, query, options = {}) {
+        try {
+            const scriptId = this.extractScriptId(scriptUrl);
+            if (!scriptId) {
+                return [];
+            }
+
+            const { searchColumn = 'A' } = options;
+
+            const result = await this.makeRequest(scriptId, 'getSuggestions', {
+                query: query,
+                searchColumn: searchColumn
+            });
+
+            if (result.success) {
+                return result.suggestions || [];
+            }
+
+            return [];
+        } catch (error) {
+            console.error('Ошибка получения подсказок:', error);
+            return [];
+        }
+    }
+
+    // Получить информацию о таблице
+    async getSheetInfo(scriptUrl) {
+        try {
+            const scriptId = this.extractScriptId(scriptUrl);
+            if (!scriptId) {
+                return {
+                    success: false,
+                    error: 'Неверный формат URL'
+                };
+            }
+
+            const result = await this.makeRequest(scriptId, 'getSheetInfo');
+            return result;
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Ошибка получения информации: ' + error.message
+            };
+        }
+    }
+}
+
+module.exports = GoogleAppsScriptService;

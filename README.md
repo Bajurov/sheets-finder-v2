@@ -42,20 +42,22 @@ DATABASE_PATH=./database.sqlite
 
 Для продакшн деплоя используйте Vercel с Vercel KV базой данных. Подробная инструкция в [DEPLOY.md](DEPLOY.md).
 
-## Настройка Google Sheets API
+## Настройка Google Apps Script
 
-1. Перейдите в [Google Cloud Console](https://console.cloud.google.com/)
-2. Создайте новый проект или выберите существующий
-3. Включите Google Sheets API
-4. Создайте API ключ в разделе "Учетные данные"
-5. Скопируйте API ключ в файл `.env`
+1. Перейдите на [script.google.com](https://script.google.com)
+2. Создайте новый проект и скопируйте код из `google-apps-script/Code.gs`
+3. Свяжите проект с вашей Google Sheets таблицей
+4. Разверните как веб-приложение с доступом "Все"
+5. Скопируйте URL веб-приложения в настройки Sheets Finder
+
+Подробная инструкция в [GOOGLE_APPS_SCRIPT_SETUP.md](GOOGLE_APPS_SCRIPT_SETUP.md)
 
 ## Настройка Google Sheets
 
 1. Создайте Google Sheets таблицу
 2. Установите доступ "Anyone with the link can view"
-3. Скопируйте ссылку на таблицу
-4. В админ-панели укажите ссылку и настройте столбцы
+3. Настройте структуру таблицы (столбец A - бренды, B,C,D - поставщики)
+4. В админ-панели укажите URL Apps Script и настройте столбцы
 
 ## Запуск
 
