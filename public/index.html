@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheets Finder</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Экран загрузки -->
+        <div id="loading" class="screen">
+            <div class="loading-spinner"></div>
+            <p>Загрузка...</p>
+        </div>
+
+        <!-- Экран "Нет доступа" -->
+        <div id="no-access" class="screen hidden">
+            <div class="container">
+                <h1>🚫</h1>
+                <h2>У вас нет доступа</h2>
+                <p>Обратитесь к администратору.</p>
+                <div id="telegram-id-info" class="telegram-id-info">
+                    <p><strong>Ваш Telegram ID:</strong></p>
+                    <p id="user-telegram-id" class="telegram-id"></p>
+                    <p class="help-text">Сообщите этот ID администратору для получения доступа</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Админ-панель -->
+        <div id="admin-panel" class="screen hidden">
+            <div class="container">
+                <h1>⚙️ Админ-панель</h1>
+                
+                <div class="admin-section">
+                    <button id="go-to-search" class="btn btn-primary">Перейти к поиску</button>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Пользователи</h3>
+                    <div id="users-list"></div>
+                    <button id="add-user-btn" class="btn btn-secondary">Добавить пользователя</button>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Настройки таблицы</h3>
+                    <div class="form-group">
+                        <label for="sheets-url">Ссылка на Google Sheets:</label>
+                        <input type="url" id="sheets-url" placeholder="https://docs.google.com/spreadsheets/d/...">
+                    </div>
+                    <button id="test-connection" class="btn btn-secondary">Тест подключения</button>
+                    <div id="connection-status"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Настройки поиска</h3>
+                    <div class="form-group">
+                        <label for="search-column">Столбец для поиска:</label>
+                        <input type="text" id="search-column" placeholder="A или название колонки">
+                    </div>
+                    <div class="form-group">
+                        <label for="result-columns">Столбцы для вывода результатов:</label>
+                        <input type="text" id="result-columns" placeholder="B, C, D">
+                    </div>
+                    <button id="save-settings" class="btn btn-primary">Сохранить настройки</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран поиска -->
+        <div id="search-screen" class="screen hidden">
+            <div class="container">
+                <div class="header">
+                    <h1>🔍 Поиск брендов</h1>
+                    <button id="go-to-admin" class="btn btn-secondary hidden">Админ-панель</button>
+                </div>
+
+                <div class="search-section">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Введите название бренда...">
+                        <button id="search-btn" class="btn btn-primary">Найти</button>
+                    </div>
+                    <div id="suggestions" class="suggestions hidden"></div>
+                </div>
+
+                <div id="search-results" class="results hidden">
+                    <div id="results-list"></div>
+                    <div class="pagination">
+                        <button id="prev-page" class="btn btn-secondary" disabled>Назад</button>
+                        <span id="page-info"></span>
+                        <button id="next-page" class="btn btn-secondary" disabled>Вперёд</button>
+                    </div>
+                </div>
+
+                <div id="no-results" class="message hidden">
+                    <p>Ничего не найдено</p>
+                </div>
+
+                <div id="connection-error" class="message error hidden">
+                    <p>Ошибка соединения с таблицей</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления пользователя -->
+    <div id="add-user-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Добавить пользователя</h3>
+            <div class="form-group">
+                <label for="new-user-telegram-id">Telegram ID:</label>
+                <input type="text" id="new-user-telegram-id" placeholder="123456789">
+            </div>
+            <div class="form-group">
+                <label for="new-user-username">Username:</label>
+                <input type="text" id="new-user-username" placeholder="@username">
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-add-user" class="btn btn-secondary">Отмена</button>
+                <button id="confirm-add-user" class="btn btn-primary">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
