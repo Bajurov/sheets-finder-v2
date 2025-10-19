@@ -28,7 +28,7 @@ class GoogleAppsScriptService {
         return null;
     }
 
-    // Выполнить запрос к Google Apps Script
+    // Выполнить запрос к Google Apps Script с обработкой редиректов
     async makeRequest(scriptId, functionName, parameters = {}) {
         return new Promise((resolve, reject) => {
             const url = `${this.baseUrl}/${scriptId}/exec`;
@@ -44,71 +44,79 @@ class GoogleAppsScriptService {
                     'Content-Length': Buffer.byteLength(postData),
                     'User-Agent': 'Sheets-Finder-App/1.0'
                 },
-                timeout: 10000
+                timeout: 15000
             };
 
-            const req = https.request(url, options, (res) => {
-                let data = '';
-                
-                console.log('Google Apps Script Response Status:', res.statusCode);
-                console.log('Google Apps Script Response Headers:', res.headers);
-                
-                res.on('data', (chunk) => {
-                    data += chunk;
-                });
-                
-                res.on('end', () => {
-                    console.log('Google Apps Script Raw Response:', data.substring(0, 200) + '...');
-                    
-                    // Проверяем статус код
-                    if (res.statusCode >= 300 && res.statusCode < 400) {
-                        resolve({
-                            success: false,
-                            error: `Получен редирект (статус ${res.statusCode}). URL может быть неправильным`
-                        });
-                        return;
-                    }
-                    
-                    // Проверяем, что ответ начинается с JSON
-                    if (data.trim().startsWith('<')) {
-                        resolve({
-                            success: false,
-                            error: 'Получен HTML вместо JSON. Возможно, URL неправильный или развертывание не настроено как веб-приложение'
-                        });
-                        return;
-                    }
-                    
-                    try {
-                        const result = JSON.parse(data);
-                        resolve(result);
-                    } catch (error) {
-                        resolve({
-                            success: false,
-                            error: 'Ошибка парсинга ответа: ' + error.message + '. Ответ: ' + data.substring(0, 100)
-                        });
-                    }
-                });
-            });
+            console.log('Making request to:', url);
+            console.log('Request data:', postData);
 
-            req.on('error', (error) => {
-                console.log('Request error:', error);
-                reject({
-                    success: false,
-                    error: 'Ошибка сети: ' + error.message
+            const makeHttpRequest = (requestUrl) => {
+                const req = https.request(requestUrl, options, (res) => {
+                    let data = '';
+                    
+                    console.log('Response Status:', res.statusCode);
+                    console.log('Response Headers:', res.headers);
+                    
+                    res.on('data', (chunk) => {
+                        data += chunk;
+                    });
+                    
+                    res.on('end', () => {
+                        console.log('Raw Response:', data.substring(0, 200) + '...');
+                        
+                        // Обрабатываем редирект
+                        if (res.statusCode >= 300 && res.statusCode < 400) {
+                            const redirectUrl = res.headers.location;
+                            if (redirectUrl) {
+                                console.log('Following redirect to:', redirectUrl);
+                                makeHttpRequest(redirectUrl);
+                                return;
+                            }
+                        }
+                        
+                        // Проверяем, что ответ начинается с JSON
+                        if (data.trim().startsWith('<')) {
+                            resolve({
+                                success: false,
+                                error: 'Получен HTML вместо JSON. Проверьте URL и развертывание Google Apps Script'
+                            });
+                            return;
+                        }
+                        
+                        try {
+                            const result = JSON.parse(data);
+                            resolve(result);
+                        } catch (error) {
+                            resolve({
+                                success: false,
+                                error: 'Ошибка парсинга ответа: ' + error.message + '. Ответ: ' + data.substring(0, 100)
+                            });
+                        }
+                    });
                 });
-            });
 
-            req.on('timeout', () => {
-                console.log('Request timeout');
-                req.destroy();
-                reject({
-                    success: false,
-                    error: 'Таймаут запроса к Google Apps Script'
+                req.on('error', (error) => {
+                    console.log('Request error:', error);
+                    resolve({
+                        success: false,
+                        error: 'Ошибка сети: ' + error.message
+                    });
                 });
-            });
 
-            req.write(postData);
-            req.end();
+                req.on('timeout', () => {
+                    console.log('Request timeout');
+                    req.destroy();
+                    resolve({
+                        success: false,
+                        error: 'Таймаут запроса к Google Apps Script'
+                    });
+                });
+
+                req.write(postData);
+                req.end();
+            };
+
+            makeHttpRequest(url);
         });
     }
 
