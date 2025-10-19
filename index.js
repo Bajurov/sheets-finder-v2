@@ -23,6 +23,13 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Логирование всех запросов
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
+
 app.use(express.static('public'));
 
 // Routes
@@ -32,10 +39,13 @@ app.get('/', (req, res) => {
 
 // Простой тестовый endpoint
 app.get('/api/test', (req, res) => {
+    console.log('Test API endpoint called');
     res.json({ 
         status: 'ok', 
         message: 'API is working',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        adminId: process.env.ADMIN_ID
     });
 });
 
@@ -83,8 +93,14 @@ try {
     });
 }
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Database: ${Database.name || 'Unknown'}`);
-});
+// Для Vercel нужно экспортировать app
+module.exports = app;
+
+// Локальный запуск
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`Database: ${Database.name || 'Unknown'}`);
+    });
+}
