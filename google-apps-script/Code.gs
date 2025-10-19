@@ -3,6 +3,60 @@
  * Разместите этот код в Google Apps Script (script.google.com)
  */
 
+// Обязательная функция для веб-приложения
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: 'Используйте POST запросы для работы с API'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Обязательная функция для веб-приложения
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const { function: functionName, parameters = {} } = data;
+    
+    let result;
+    
+    switch (functionName) {
+      case 'testConnection':
+        result = testConnection();
+        break;
+      case 'searchInSheet':
+        result = searchInSheet(
+          parameters.query,
+          parameters.searchColumn,
+          parameters.resultColumns
+        );
+        break;
+      case 'getSuggestions':
+        result = getSuggestions(
+          parameters.query,
+          parameters.searchColumn
+        );
+        break;
+      case 'getSheetInfo':
+        result = getSheetInfo();
+        break;
+      default:
+        result = {
+          success: false,
+          error: 'Неизвестная функция: ' + functionName
+        };
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: 'Ошибка обработки запроса: ' + error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 // Основная функция для поиска
 function searchInSheet(query, searchColumn = 'A', resultColumns = 'B,C,D') {
   try {
