@@ -55,12 +55,24 @@ async function initApp() {
         const telegramUser = tg.initDataUnsafe?.user;
         console.log('Telegram user data:', telegramUser);
         
+        // Отладочная информация
+        let debugInfo = `Telegram WebApp данные:\n`;
+        debugInfo += `initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe, null, 2)}\n`;
+        debugInfo += `user: ${JSON.stringify(telegramUser, null, 2)}\n`;
+        
         if (!telegramUser) {
             // Если данные пользователя недоступны, показываем экран без ID
             const telegramIdElement = document.getElementById('user-telegram-id');
+            const debugContent = document.getElementById('debug-content');
+            
             if (telegramIdElement) {
                 telegramIdElement.textContent = 'Недоступен';
             }
+            
+            if (debugContent) {
+                debugContent.textContent = debugInfo;
+            }
+            
             showScreen('noAccess');
             return;
         }
@@ -79,12 +91,29 @@ async function initApp() {
 
         const userData = await response.json();
         
+        // Добавляем информацию об авторизации в отладку
+        debugInfo += `\nЗапрос авторизации:\n`;
+        debugInfo += `Отправлено: ${JSON.stringify({
+            telegramId: telegramUser.id,
+            username: telegramUser.username,
+            firstName: telegramUser.first_name,
+            lastName: telegramUser.last_name
+        }, null, 2)}\n`;
+        debugInfo += `Получено: ${JSON.stringify(userData, null, 2)}\n`;
+        
         if (!userData.authorized) {
             // Отображаем Telegram ID пользователя на экране "Нет доступа"
             const telegramIdElement = document.getElementById('user-telegram-id');
+            const debugContent = document.getElementById('debug-content');
+            
             if (telegramIdElement && telegramUser.id) {
                 telegramIdElement.textContent = telegramUser.id;
             }
+            
+            if (debugContent) {
+                debugContent.textContent = debugInfo;
+            }
+            
             showScreen('noAccess');
             return;
         }
