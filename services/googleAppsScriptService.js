@@ -7,8 +7,25 @@ class GoogleAppsScriptService {
 
     // Извлечь ID скрипта из URL Google Apps Script
     extractScriptId(url) {
-        const match = url.match(/\/macros\/s\/([a-zA-Z0-9-_]+)/);
-        return match ? match[1] : null;
+        console.log('Extracting script ID from URL:', url);
+        
+        // Проверяем разные форматы URL
+        const patterns = [
+            /\/macros\/s\/([a-zA-Z0-9-_]+)/,  // Стандартный формат
+            /\/exec\/([a-zA-Z0-9-_]+)/,       // Альтернативный формат
+            /\/s\/([a-zA-Z0-9-_]+)/           // Короткий формат
+        ];
+        
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) {
+                console.log('Found script ID:', match[1]);
+                return match[1];
+            }
+        }
+        
+        console.log('No script ID found in URL');
+        return null;
     }
 
     // Выполнить запрос к Google Apps Script
@@ -83,7 +100,7 @@ class GoogleAppsScriptService {
             if (!scriptId) {
                 return {
                     success: false,
-                    error: 'Неверный формат URL Google Apps Script. URL должен содержать /macros/s/.../exec'
+                    error: `Неверный формат URL Google Apps Script. Получен URL: "${scriptUrl}". URL должен содержать /macros/s/.../exec или быть в формате: https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec`
                 };
             }
             
