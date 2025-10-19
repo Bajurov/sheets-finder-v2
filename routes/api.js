@@ -11,6 +11,10 @@ router.post('/auth', async (req, res) => {
     try {
         const { telegramId, username, firstName, lastName } = req.body;
         
+        if (!telegramId) {
+            return res.json({ authorized: false });
+        }
+        
         const user = await db.getUserByTelegramId(telegramId);
         
         if (!user) {

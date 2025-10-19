@@ -4,9 +4,18 @@ const path = require('path');
 require('dotenv').config();
 
 // Выбираем базу данных в зависимости от окружения
-const Database = process.env.NODE_ENV === 'production' 
-    ? require('./database/vercelKvDatabase')
-    : require('./database/database');
+let Database;
+try {
+    if (process.env.NODE_ENV === 'production' && process.env.KV_REST_API_URL) {
+        Database = require('./database/vercelKvDatabase');
+    } else {
+        Database = require('./database/simpleDatabase');
+    }
+} catch (error) {
+    console.error('Ошибка загрузки базы данных:', error);
+    // Fallback на простую базу данных
+    Database = require('./database/simpleDatabase');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -1,8 +1,18 @@
-const { kv } = require('@vercel/kv');
+let kv;
+try {
+    const { kv: kvClient } = require('@vercel/kv');
+    kv = kvClient;
+} catch (error) {
+    console.error('Ошибка загрузки Vercel KV:', error);
+    kv = null;
+}
 
 class VercelKvDatabase {
     constructor() {
         this.kv = kv;
+        if (!this.kv) {
+            console.warn('Vercel KV недоступен, используется fallback');
+        }
     }
 
     // Ключи для хранения данных
@@ -20,6 +30,10 @@ class VercelKvDatabase {
 
     // Пользователи
     async getUserByTelegramId(telegramId) {
+        if (!this.kv) {
+            console.warn('Vercel KV недоступен');
+            return null;
+        }
         try {
             const userData = await this.kv.get(this.getUserKey(telegramId));
             return userData ? JSON.parse(userData) : null;
