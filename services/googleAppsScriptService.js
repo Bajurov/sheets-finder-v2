@@ -41,8 +41,10 @@ class GoogleAppsScriptService {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(postData)
-                }
+                    'Content-Length': Buffer.byteLength(postData),
+                    'User-Agent': 'Sheets-Finder-App/1.0'
+                },
+                timeout: 10000
             };
 
             const req = https.request(url, options, (res) => {
@@ -58,11 +60,20 @@ class GoogleAppsScriptService {
                 res.on('end', () => {
                     console.log('Google Apps Script Raw Response:', data.substring(0, 200) + '...');
                     
+                    // Проверяем статус код
+                    if (res.statusCode >= 300 && res.statusCode < 400) {
+                        resolve({
+                            success: false,
+                            error: `Получен редирект (статус ${res.statusCode}). URL может быть неправильным`
+                        });
+                        return;
+                    }
+                    
                     // Проверяем, что ответ начинается с JSON
                     if (data.trim().startsWith('<')) {
                         resolve({
                             success: false,
-                            error: 'Получен HTML вместо JSON. Проверьте URL и развертывание Google Apps Script'
+                            error: 'Получен HTML вместо JSON. Возможно, URL неправильный или развертывание не настроено как веб-приложение'
                         });
                         return;
                     }
@@ -80,9 +91,19 @@ class GoogleAppsScriptService {
             });
 
             req.on('error', (error) => {
+                console.log('Request error:', error);
                 reject({
                     success: false,
                     error: 'Ошибка сети: ' + error.message
+                });
+            });
+
+            req.on('timeout', () => {
+                console.log('Request timeout');
+                req.destroy();
+                reject({
+                    success: false,
+                    error: 'Таймаут запроса к Google Apps Script'
                 });
             });
 
