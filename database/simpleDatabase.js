@@ -9,8 +9,10 @@ class SimpleDatabase {
     init() {
         // Добавляем администратора из переменной окружения
         const adminId = process.env.ADMIN_ID;
+        console.log('ADMIN_ID from environment:', adminId);
+        
         if (adminId) {
-            this.users.set(parseInt(adminId), {
+            const adminUser = {
                 id: 1,
                 telegram_id: parseInt(adminId),
                 username: 'admin',
@@ -18,19 +20,24 @@ class SimpleDatabase {
                 last_name: 'User',
                 role: 'admin',
                 created_at: new Date().toISOString()
-            });
+            };
             
-            console.log(`Добавлен администратор с ID: ${adminId}`);
+            this.users.set(parseInt(adminId), adminUser);
+            console.log(`Добавлен администратор с ID: ${adminId}`, adminUser);
         } else {
             console.log('ADMIN_ID не установлен в переменных окружения');
         }
         
         console.log('Используется простая база данных в памяти');
+        console.log('Все пользователи в базе:', Array.from(this.users.values()));
     }
 
     // Пользователи
     async getUserByTelegramId(telegramId) {
-        return this.users.get(telegramId) || null;
+        console.log(`Поиск пользователя с ID: ${telegramId}`);
+        const user = this.users.get(telegramId) || null;
+        console.log(`Найден пользователь:`, user);
+        return user;
     }
 
     async getAllUsers() {

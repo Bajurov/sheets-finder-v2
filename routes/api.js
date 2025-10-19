@@ -21,14 +21,18 @@ const appsScriptService = new GoogleAppsScriptService();
 router.post('/auth', async (req, res) => {
     try {
         const { telegramId, username, firstName, lastName } = req.body;
+        console.log('Auth request:', { telegramId, username, firstName, lastName });
         
         if (!telegramId) {
+            console.log('No telegramId provided');
             return res.json({ authorized: false });
         }
         
         const user = await db.getUserByTelegramId(telegramId);
+        console.log('Found user:', user);
         
         if (!user) {
+            console.log('User not found in database');
             return res.json({ authorized: false });
         }
         

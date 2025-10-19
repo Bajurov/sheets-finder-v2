@@ -53,6 +53,8 @@ async function initApp() {
         
         // Получаем данные пользователя из Telegram
         const telegramUser = tg.initDataUnsafe?.user;
+        console.log('Telegram user data:', telegramUser);
+        
         if (!telegramUser) {
             // Если данные пользователя недоступны, показываем экран без ID
             const telegramIdElement = document.getElementById('user-telegram-id');
