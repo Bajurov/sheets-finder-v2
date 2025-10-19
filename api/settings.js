@@ -1,9 +1,4 @@
-// In-memory settings
-const settings = {
-    sheets_url: '',
-    search_column: '',
-    result_columns: ''
-};
+const settings = require('../shared/settings');
 
 module.exports = (req, res) => {
     res.setHeader('Content-Type', 'application/json');
