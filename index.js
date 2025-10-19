@@ -33,6 +33,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Тестовый endpoint
+app.get('/api/test', (req, res) => {
+    console.log('Test API endpoint called');
+    res.json({ 
+        status: 'ok', 
+        message: 'API is working',
+        timestamp: new Date().toISOString(),
+        adminId: ADMIN_ID
+    });
+});
+
 // API routes
 app.post('/api/auth', (req, res) => {
     console.log('Auth request:', req.body);
