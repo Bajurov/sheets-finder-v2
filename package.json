@@ -2,18 +2,16 @@
   "name": "sheets-finder",
   "version": "1.0.0",
   "description": "Telegram Mini App for finding brands and suppliers in Google Sheets",
-  "main": "index.js",
+  "main": "index-simple.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node index-simple.js",
+    "dev": "nodemon index-simple.js",
     "init-admin": "node scripts/init-admin.js",
     "init-admin-vercel": "node scripts/init-admin-vercel.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "@vercel/kv": "^1.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
