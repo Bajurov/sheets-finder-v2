@@ -13,6 +13,47 @@ class VercelKvDatabase {
         if (!this.kv) {
             console.warn('Vercel KV недоступен, используется fallback');
         }
+        this.initDefaultAdmin();
+    }
+
+    // Инициализация администратора из переменной окружения
+    async initDefaultAdmin() {
+        if (!this.kv) return;
+        
+        const adminId = process.env.ADMIN_ID;
+        if (!adminId) {
+            console.log('ADMIN_ID не установлен в переменных окружения');
+            return;
+        }
+        
+        try {
+            // Проверяем, есть ли уже админ
+            const existingAdmin = await this.kv.get(this.getUserKey(adminId));
+            if (!existingAdmin) {
+                const admin = {
+                    id: 1,
+                    telegram_id: parseInt(adminId),
+                    username: 'admin',
+                    first_name: 'Admin',
+                    last_name: 'User',
+                    role: 'admin',
+                    created_at: new Date().toISOString()
+                };
+                
+                await this.kv.set(this.getUserKey(adminId), JSON.stringify(admin));
+                
+                // Добавляем в список пользователей
+                const usersList = await this.kv.get(this.getUsersListKey()) || [];
+                if (!usersList.includes(parseInt(adminId))) {
+                    usersList.push(parseInt(adminId));
+                    await this.kv.set(this.getUsersListKey(), usersList);
+                }
+                
+                console.log(`Добавлен администратор с ID: ${adminId}`);
+            }
+        } catch (error) {
+            console.error('Ошибка инициализации админа:', error);
+        }
     }
 
     // Ключи для хранения данных

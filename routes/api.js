@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const Database = require('../database/database');
+// Выбираем базу данных в зависимости от окружения
+let Database;
+try {
+    if (process.env.NODE_ENV === 'production' && process.env.KV_REST_API_URL) {
+        Database = require('../database/vercelKvDatabase');
+    } else {
+        Database = require('../database/simpleDatabase');
+    }
+} catch (error) {
+    console.error('Ошибка загрузки базы данных:', error);
+    Database = require('../database/simpleDatabase');
+}
 const GoogleAppsScriptService = require('../services/googleAppsScriptService');
 
 const db = new Database();

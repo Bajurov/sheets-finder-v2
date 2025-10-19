@@ -37,7 +37,8 @@ async function initAdmin() {
         }
 
         // Получаем данные нового админа
-        const telegramId = await askQuestion('Введите Telegram ID администратора: ');
+        const defaultAdminId = process.env.ADMIN_ID || '699759380';
+        const telegramId = await askQuestion(`Введите Telegram ID администратора (по умолчанию ${defaultAdminId}): `) || defaultAdminId;
         const username = await askQuestion('Введите username (необязательно): ');
         const firstName = await askQuestion('Введите имя (необязательно): ');
         const lastName = await askQuestion('Введите фамилию (необязательно): ');

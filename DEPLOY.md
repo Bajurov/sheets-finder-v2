@@ -38,6 +38,9 @@ KV_REST_API_URL=your_kv_url
 KV_REST_API_TOKEN=your_kv_token
 KV_REST_API_READ_ONLY_TOKEN=your_kv_readonly_token
 
+# Администратор
+ADMIN_ID=699759380
+
 # Окружение
 NODE_ENV=production
 ```

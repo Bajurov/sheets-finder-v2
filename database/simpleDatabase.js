@@ -7,7 +7,24 @@ class SimpleDatabase {
     }
 
     init() {
-        // Инициализация не требуется для in-memory базы
+        // Добавляем администратора из переменной окружения
+        const adminId = process.env.ADMIN_ID;
+        if (adminId) {
+            this.users.set(parseInt(adminId), {
+                id: 1,
+                telegram_id: parseInt(adminId),
+                username: 'admin',
+                first_name: 'Admin',
+                last_name: 'User',
+                role: 'admin',
+                created_at: new Date().toISOString()
+            });
+            
+            console.log(`Добавлен администратор с ID: ${adminId}`);
+        } else {
+            console.log('ADMIN_ID не установлен в переменных окружения');
+        }
+        
         console.log('Используется простая база данных в памяти');
     }
 
