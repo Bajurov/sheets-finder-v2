@@ -1,4 +1,5 @@
 const https = require('https');
+const fetch = require('node-fetch');
 
 class GoogleAppsScriptService {
     constructor() {
@@ -30,94 +31,57 @@ class GoogleAppsScriptService {
 
     // Выполнить запрос к Google Apps Script с обработкой редиректов
     async makeRequest(scriptId, functionName, parameters = {}) {
-        return new Promise((resolve, reject) => {
+        try {
             const url = `${this.baseUrl}/${scriptId}/exec`;
-            const postData = JSON.stringify({
+            const postData = {
                 function: functionName,
                 parameters: parameters
-            });
-
-            const options = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(postData),
-                    'User-Agent': 'Sheets-Finder-App/1.0'
-                },
-                timeout: 15000
             };
 
             console.log('Making request to:', url);
             console.log('Request data:', postData);
 
-            const makeHttpRequest = (requestUrl) => {
-                const req = https.request(requestUrl, options, (res) => {
-                    let data = '';
-                    
-                    console.log('Response Status:', res.statusCode);
-                    console.log('Response Headers:', res.headers);
-                    
-                    res.on('data', (chunk) => {
-                        data += chunk;
-                    });
-                    
-                    res.on('end', () => {
-                        console.log('Raw Response:', data.substring(0, 200) + '...');
-                        
-                        // Обрабатываем редирект
-                        if (res.statusCode >= 300 && res.statusCode < 400) {
-                            const redirectUrl = res.headers.location;
-                            if (redirectUrl) {
-                                console.log('Following redirect to:', redirectUrl);
-                                makeHttpRequest(redirectUrl);
-                                return;
-                            }
-                        }
-                        
-                        // Проверяем, что ответ начинается с JSON
-                        if (data.trim().startsWith('<')) {
-                            resolve({
-                                success: false,
-                                error: 'Получен HTML вместо JSON. Проверьте URL и развертывание Google Apps Script'
-                            });
-                            return;
-                        }
-                        
-                        try {
-                            const result = JSON.parse(data);
-                            resolve(result);
-                        } catch (error) {
-                            resolve({
-                                success: false,
-                                error: 'Ошибка парсинга ответа: ' + error.message + '. Ответ: ' + data.substring(0, 100)
-                            });
-                        }
-                    });
-                });
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Sheets-Finder-App/1.0'
+                },
+                body: JSON.stringify(postData),
+                redirect: 'follow', // Автоматически следовать редиректам
+                timeout: 15000
+            });
 
-                req.on('error', (error) => {
-                    console.log('Request error:', error);
-                    resolve({
-                        success: false,
-                        error: 'Ошибка сети: ' + error.message
-                    });
-                });
+            console.log('Response Status:', response.status);
+            console.log('Response Headers:', response.headers);
 
-                req.on('timeout', () => {
-                    console.log('Request timeout');
-                    req.destroy();
-                    resolve({
-                        success: false,
-                        error: 'Таймаут запроса к Google Apps Script'
-                    });
-                });
+            const data = await response.text();
+            console.log('Raw Response:', data.substring(0, 200) + '...');
 
-                req.write(postData);
-                req.end();
+            // Проверяем, что ответ начинается с JSON
+            if (data.trim().startsWith('<')) {
+                return {
+                    success: false,
+                    error: 'Получен HTML вместо JSON. Проверьте URL и развертывание Google Apps Script'
+                };
+            }
+
+            try {
+                const result = JSON.parse(data);
+                return result;
+            } catch (error) {
+                return {
+                    success: false,
+                    error: 'Ошибка парсинга ответа: ' + error.message + '. Ответ: ' + data.substring(0, 100)
+                };
+            }
+        } catch (error) {
+            console.log('Request error:', error);
+            return {
+                success: false,
+                error: 'Ошибка сети: ' + error.message
             };
-
-            makeHttpRequest(url);
-        });
+        }
     }
 
     // Тест подключения к Google Apps Script
