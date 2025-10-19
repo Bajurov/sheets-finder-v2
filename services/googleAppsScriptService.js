@@ -31,18 +31,32 @@ class GoogleAppsScriptService {
             const req = https.request(url, options, (res) => {
                 let data = '';
                 
+                console.log('Google Apps Script Response Status:', res.statusCode);
+                console.log('Google Apps Script Response Headers:', res.headers);
+                
                 res.on('data', (chunk) => {
                     data += chunk;
                 });
                 
                 res.on('end', () => {
+                    console.log('Google Apps Script Raw Response:', data.substring(0, 200) + '...');
+                    
+                    // Проверяем, что ответ начинается с JSON
+                    if (data.trim().startsWith('<')) {
+                        resolve({
+                            success: false,
+                            error: 'Получен HTML вместо JSON. Проверьте URL и развертывание Google Apps Script'
+                        });
+                        return;
+                    }
+                    
                     try {
                         const result = JSON.parse(data);
                         resolve(result);
                     } catch (error) {
                         resolve({
                             success: false,
-                            error: 'Ошибка парсинга ответа: ' + error.message
+                            error: 'Ошибка парсинга ответа: ' + error.message + '. Ответ: ' + data.substring(0, 100)
                         });
                     }
                 });
@@ -63,13 +77,17 @@ class GoogleAppsScriptService {
     // Тест подключения к Google Apps Script
     async testConnection(scriptUrl) {
         try {
+            console.log('Testing connection to:', scriptUrl);
+            
             const scriptId = this.extractScriptId(scriptUrl);
             if (!scriptId) {
                 return {
                     success: false,
-                    error: 'Неверный формат URL Google Apps Script'
+                    error: 'Неверный формат URL Google Apps Script. URL должен содержать /macros/s/.../exec'
                 };
             }
+            
+            console.log('Extracted script ID:', scriptId);
 
             const result = await this.makeRequest(scriptId, 'testConnection');
             
