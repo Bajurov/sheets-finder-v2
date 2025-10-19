@@ -51,16 +51,26 @@ async function initApp() {
     try {
         showScreen('loading');
         
+        // Отладочная информация
+        let debugInfo = `=== ОТЛАДОЧНАЯ ИНФОРМАЦИЯ ===\n\n`;
+        debugInfo += `Telegram WebApp объект: ${typeof tg}\n`;
+        debugInfo += `tg.initDataUnsafe: ${typeof tg.initDataUnsafe}\n`;
+        debugInfo += `tg.initDataUnsafe?.user: ${typeof tg.initDataUnsafe?.user}\n\n`;
+        
         // Получаем данные пользователя из Telegram
         const telegramUser = tg.initDataUnsafe?.user;
         console.log('Telegram user data:', telegramUser);
         
-        // Отладочная информация
-        let debugInfo = `Telegram WebApp данные:\n`;
-        debugInfo += `initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe, null, 2)}\n`;
-        debugInfo += `user: ${JSON.stringify(telegramUser, null, 2)}\n`;
+        debugInfo += `initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe, null, 2)}\n\n`;
+        debugInfo += `user: ${JSON.stringify(telegramUser, null, 2)}\n\n`;
         
         if (!telegramUser) {
+            debugInfo += `ОШИБКА: Данные пользователя недоступны!\n`;
+            debugInfo += `Возможные причины:\n`;
+            debugInfo += `- Telegram WebApp не инициализирован\n`;
+            debugInfo += `- Пользователь не авторизован в Telegram\n`;
+            debugInfo += `- Проблема с настройками бота\n\n`;
+            
             // Если данные пользователя недоступны, показываем экран без ID
             const telegramIdElement = document.getElementById('user-telegram-id');
             const debugContent = document.getElementById('debug-content');
@@ -78,18 +88,30 @@ async function initApp() {
         }
 
         // Проверяем авторизацию пользователя
-        const response = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: telegramUser.id,
-                username: telegramUser.username,
-                firstName: telegramUser.first_name,
-                lastName: telegramUser.last_name
-            })
-        });
-
-        const userData = await response.json();
+        debugInfo += `Отправляем запрос авторизации...\n`;
+        
+        let response;
+        let userData;
+        
+        try {
+            response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegramId: telegramUser.id,
+                    username: telegramUser.username,
+                    firstName: telegramUser.first_name,
+                    lastName: telegramUser.last_name
+                })
+            });
+            
+            debugInfo += `Статус ответа: ${response.status}\n`;
+            userData = await response.json();
+            debugInfo += `Ответ получен успешно\n`;
+        } catch (error) {
+            debugInfo += `ОШИБКА при запросе авторизации: ${error.message}\n`;
+            userData = { authorized: false, error: error.message };
+        }
         
         // Добавляем информацию об авторизации в отладку
         debugInfo += `\nЗапрос авторизации:\n`;
@@ -131,6 +153,18 @@ async function initApp() {
         
     } catch (error) {
         console.error('Ошибка инициализации:', error);
+        
+        // Показываем отладочную информацию об ошибке
+        const debugContent = document.getElementById('debug-content');
+        if (debugContent) {
+            let debugInfo = `=== ОШИБКА ИНИЦИАЛИЗАЦИИ ===\n\n`;
+            debugInfo += `Ошибка: ${error.message}\n`;
+            debugInfo += `Стек: ${error.stack}\n\n`;
+            debugInfo += `Telegram WebApp: ${typeof tg}\n`;
+            debugInfo += `tg.initDataUnsafe: ${typeof tg.initDataUnsafe}\n`;
+            debugContent.textContent = debugInfo;
+        }
+        
         showScreen('noAccess');
     }
 }
@@ -494,4 +528,16 @@ elements.cancelAddUser.addEventListener('click', () => {
 elements.confirmAddUser.addEventListener('click', addUser);
 
 // Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверяем, что Telegram WebApp загружен
+    if (typeof tg === 'undefined') {
+        const debugContent = document.getElementById('debug-content');
+        if (debugContent) {
+            debugContent.textContent = `=== ОШИБКА ===\n\nTelegram WebApp не загружен!\nПроверьте настройки бота.`;
+        }
+        showScreen('noAccess');
+        return;
+    }
+    
+    initApp();
+});
