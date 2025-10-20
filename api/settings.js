@@ -8,10 +8,14 @@ module.exports = (req, res) => {
     }
 
     if (req.method === 'POST') {
-        const { sheets_url, search_column, result_columns } = req.body;
-        settings.sheets_url = sheets_url;
-        settings.search_column = search_column;
-        settings.result_columns = result_columns;
+        const { sheetsUrl, searchColumn, resultColumns, sheets_url, search_column, result_columns } = req.body;
+        
+        // Поддерживаем оба формата (старый и новый)
+        settings.sheets_url = sheetsUrl || sheets_url || '';
+        settings.search_column = searchColumn || search_column || '';
+        settings.result_columns = resultColumns || result_columns || '';
+        
+        console.log('Settings saved:', settings);
         return res.status(200).json({ success: true, settings });
     }
 

@@ -15,7 +15,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Запрос обязателен' });
     }
 
+    console.log('Search request:', { query, page });
+    console.log('Current settings:', settings);
+
     if (!settings.sheets_url) {
+        console.log('No sheets URL configured');
         return res.status(400).json({ 
             error: 'connection',
             message: 'Таблица не настроена. Обратитесь к администратору.'
